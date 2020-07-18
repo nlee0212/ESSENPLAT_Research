@@ -63,8 +63,13 @@ def image_wash(filename):
                                        cv2.THRESH_BINARY, 21, 5)
     cv2.imshow('thresh', img_thresh)
     cv2.waitKey()
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    img_cl = clahe.apply(img_thresh)
+    cv2.imshow('img', img_cl)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
 
-    image_crop(img,img_thresh,img_full)
+    image_crop(img,img_cl,img_full)
 
 path = "./"
 file_list = os.listdir(path)
