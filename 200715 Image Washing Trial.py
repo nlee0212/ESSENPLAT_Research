@@ -9,5 +9,8 @@ def image_wash(filename):
 
 path = "./"
 file_list = os.listdir(path)
-file_list_image = [file for file in file_list if file.endswith(".jpg",".png")]
+file_list_image = [file for file in file_list if file.endswith(".jpg")]
+file_list_png = [file for file in file_list if file.endswith(".png")]
+file_list_image += file_list_png
 print(file_list_image)
+print(file_list_png)
