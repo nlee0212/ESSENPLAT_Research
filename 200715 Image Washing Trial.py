@@ -28,28 +28,30 @@ def image_wash(filename):
     cv2.destroyAllWindows()"""
 
     # Adaptive Threshold
-    adap_thresh_img = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 3, 12)
+    adap_thresh_img = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 3, 10)
     cv2.imwrite('at' + img_name + '.' + img_full[1], adap_thresh_img)
     cv2.imshow('at', adap_thresh_img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
     #MorphClose
-    morph_close_img = cv2.morphologyEx(adap_thresh_img,cv2.MORPH_CLOSE,(9,5))
+    morph_close_img = cv2.morphologyEx(adap_thresh_img,cv2.MORPH_CLOSE,(20,5))
     cv2.imwrite('mc' + img_name + '.' + img_full[1], morph_close_img)
     cv2.imshow('mc', morph_close_img)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-    contours, _ = cv2.findContours(morph_close_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+    contours, _ = cv2.findContours(morph_close_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     for cnt in contours:
         x, y, w, h = cv2.boundingRect(cnt)
-        rect = cv2.rectangle(img, (x, y), (x + w, y + h), (0, 255, 255), 2)
+        rect = cv2.rectangle(adap_thresh_img, (x, y), (x + w, y + h), (255, 0, 255), 2)
+        if h<10 or w<40:
+            continue
         cv2.imshow('cnt',rect)
         cv2.waitKey(0)
 
         # Cropping the text block for giving input to OCR
-        cropped = img[y:y + h, x:x + w]
+        cropped = adap_thresh_img[y:y + h, x:x + w]
         cv2.imwrite('crop' + img_name + '.' + img_full[1], cropped)
         text_extract('crop' + img_name + '.' + img_full[1])
 
@@ -166,8 +168,6 @@ file_list = os.listdir(path)
 file_list_image = [file for file in file_list if file.endswith(".jpg")]
 file_list_png = [file for file in file_list if file.endswith(".PNG")]
 file_list_image += file_list_png
-print(file_list_image)
 
 for image in file_list_image:
     image_wash(image)
-    break
