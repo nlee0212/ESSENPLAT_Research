@@ -10,7 +10,9 @@ from google.cloud.vision import types
 def image_crop(ori_img,img,img_full):
     img_name = img_full[0]
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-    grad = cv2.morphologyEx(ori_img, cv2.MORPH_GRADIENT, kernel)
+    small = cv2.pyrDown(ori_img)
+    clear_small = cv2.pyrDown(img)
+    grad = cv2.morphologyEx(small, cv2.MORPH_GRADIENT, kernel)
     cv2.imshow('mg', grad)
     cv2.imwrite('mg' + img_name + '.' + img_full[1], grad)
     _, bw = cv2.threshold(grad, 0.0, 255.0, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
@@ -33,10 +35,10 @@ def image_crop(ori_img,img,img_full):
         cv2.drawContours(mask, contours, idx, (255, 255, 255), -1)
         r = float(cv2.countNonZero(mask[y:y + h, x:x + w])) / (w * h)
         if r > 0.3 and w > 10 and h > 10:
-            cv2.rectangle(img, (x, y), (x + w - 1, y + h - 1), (0, 255, 0), 2)
+            cv2.rectangle(clear_small, (x, y), (x + w - 1, y + h - 1), (0, 255, 0), 2)
 
     # show image with contours rect
-    cv2.imshow('rects', img)
+    cv2.imshow('rects', clear_small)
     cv2.waitKey()
 
 def image_wash(filename):
