@@ -38,7 +38,6 @@ def image_crop(ori_img,img,img_full):
         if r > 0.3 and w > 10 and h > 10:
             #cv2.rectangle(clear_small, (x, y), (x + w - 1, y + h - 1), (0, 255, 0), 2)
             cropped = clear_small[y:y + h, x:x + w]
-            cropped = cv2.pyrUp(cropped)
             crop_filename = 'crop' + str(idx) + img_name + '.' + img_full[1]
             cv2.imwrite(crop_filename, cropped)
             crop_filename_list.append(crop_filename)
@@ -62,26 +61,33 @@ def image_wash(filename):
     img_name = img_full[0]
 
     img = cv2.imread(filename,0)
-    """img_blur = cv2.bilateralFilter(img,10,50,50)
-    cv2.imwrite('blur'+filename,img_blur)"""
+    img_blur = cv2.GaussianBlur(img,(3,3),0)
+    cv2.imwrite('blur'+filename,img_blur)
     img_dil = cv2.dilate(img,(3,3),iterations=1)
     cv2.imshow('dil',img_dil)
     cv2.waitKey()
-    img_thresh = cv2.adaptiveThreshold(img_dil, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+    img_thresh = cv2.adaptiveThreshold(img_dil, 255, cv2.ADAPTIVE_THRESH_MEAN_C,
                                        cv2.THRESH_BINARY, 21, 5)
     cv2.imshow('thresh', img_thresh)
     cv2.waitKey()
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(4, 4))
     img_cl = clahe.apply(img_thresh)
-    cv2.imshow('img', img_cl)
+    cv2.imshow('CLAHE', img_cl)
     cv2.waitKey()
     cv2.destroyAllWindows()
-    img_denoise = cv2.fastNlMeansDenoising(img_cl,h=10)
-    cv2.imshow('img', img_denoise)
+    img_denoise = cv2.fastNlMeansDenoising(img_cl,h=50)
+    cv2.imshow('Denoise', img_denoise)
+    cv2.waitKey()
+    cv2.destroyAllWindows()
+    kernel = np.array([[0, -1, 0],
+                       [-1, 5, -1],
+                       [0, -1, 0]])
+    img_sharp = cv2.filter2D(img_denoise,-1,kernel)
+    cv2.imshow('sharp', img_sharp)
     cv2.waitKey()
     cv2.destroyAllWindows()
 
-    image_crop(img,img_denoise,img_full)
+    image_crop(img,img_sharp,img_full)
 
 def text_extract(file_list, filename_list):
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "C:/Program Files/VisionAPI/rosy-clover-282218-a95092db74bf.json"
