@@ -7,16 +7,10 @@ import re
 from google.cloud import vision
 from google.cloud.vision import types
 
-def image_wash(filename):
-    img_full = filename.split('.')
+def image_crop(ori_img,img,img_full):
     img_name = img_full[0]
-
-    large = cv2.imread(filename)
-    rgb = cv2.pyrDown(large)
-    small = cv2.cvtColor(rgb, cv2.COLOR_BGR2GRAY)
-
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (3, 3))
-    grad = cv2.morphologyEx(small, cv2.MORPH_GRADIENT, kernel)
+    grad = cv2.morphologyEx(ori_img, cv2.MORPH_GRADIENT, kernel)
     cv2.imshow('mg', grad)
     cv2.imwrite('mg' + img_name + '.' + img_full[1], grad)
     _, bw = cv2.threshold(grad, 0.0, 255.0, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
@@ -39,119 +33,36 @@ def image_wash(filename):
         cv2.drawContours(mask, contours, idx, (255, 255, 255), -1)
         r = float(cv2.countNonZero(mask[y:y + h, x:x + w])) / (w * h)
         if r > 0.3 and w > 10 and h > 10:
-            cv2.rectangle(rgb, (x, y), (x + w - 1, y + h - 1), (0, 255, 0), 2)
+            cv2.rectangle(img, (x, y), (x + w - 1, y + h - 1), (0, 255, 0), 2)
 
     # show image with contours rect
-    cv2.imshow('rects', rgb)
+    cv2.imshow('rects', img)
     cv2.waitKey()
 
-def text_extract(path):
-    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "C:/Program Files/VisionAPI/rosy-clover-282218-a95092db74bf.json"
+def image_wash(filename):
+    """
+    1. Image Blurring by Bilateral Filtering
+    경계선은 유지하며 전체적으로 밀도가 동일한 노이즈, 화이트 노이즈를 제거해
+    경계선이 흐려지지 않고 이미지를 부드럽게 변환
+    2. Image Dilation
+    :param filename:
+    :return:
+    """
+    img_full = filename.split('.')
+    img_name = img_full[0]
 
-    client = vision.ImageAnnotatorClient()
+    img = cv2.imread(filename,0)
+    img_blur = cv2.bilateralFilter(img,10,50,50)
+    cv2.imwrite('blur'+filename,img_blur)
+    img_dil = cv2.dilate(img_blur,(3,3),iterations=1)
+    cv2.imshow('dil',img_dil)
+    cv2.waitKey()
+    img_thresh = cv2.adaptiveThreshold(img_dil, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+                                       cv2.THRESH_BINARY, 21, 5)
+    cv2.imshow('thresh', img_thresh)
+    cv2.waitKey()
 
-    with io.open(path, 'rb') as image_file:
-        content = image_file.read()
-
-    image = vision.types.Image(content=content)
-
-    response = client.text_detection(image=image)
-    texts = response.text_annotations
-    print('Texts:')
-    try:
-        print(texts[0].description)
-    except IndexError:
-        return
-
-    sep_lang(texts[0].description, path, '_vision_')
-
-
-def sep_lang(text, filename, version):
-    result_hangul = list()
-    result_else = list()
-
-    hangul = re.compile('[^ \u3131-\u3163\uac00-\ud7a3]+')  # 위와 동일
-    result = hangul.sub('', text)  # 한글과 띄어쓰기를 제외한 모든 부분을 제거
-    if result != '':
-        result = " ".join(result.split())
-        result_hangul = result
-
-    result = hangul.findall(text)  # 정규식에 일치되는 부분을 리스트 형태로 저장
-    if len(result) != 0:
-        for item in result:
-            arr = item.split('\n')
-            for word in arr:
-                word = word.rstrip('.')
-                word = word.rstrip(',')
-                if word != '':
-                    result_else.append(word)
-
-    print(result_hangul)
-    print(result_else)
-
-    num_arr = list()
-    equ_arr = list()
-    ch_arr = list()
-
-    continue_flag = 0
-
-    for item in result_else:
-        continue_flag = 0
-        if item[0].isdigit() == True:
-            for letter in item:
-                if letter.isalpha() == True:
-                    equ_arr.append(item)
-                    continue_flag = 1
-                    break
-            if continue_flag == 1:
-                continue
-            if item.isdigit() == False:
-                num = re.findall('\d+', item)
-                for n in num:
-                    num_arr.append(n)
-                for letter in item:
-                    if letter.isdigit() == False:
-                        ch_arr.append(letter)
-                continue
-            num_arr.append(item)
-        elif item[0].isalpha() == True:
-            equ_arr.append(item)
-        else:
-            for letter in item:
-                if letter.isalpha() == True:
-                    equ_arr.append(item)
-                    continue_flag = 1
-                    break
-            if continue_flag == 1:
-                continue
-            num = re.findall('\d+', item)
-            if len(num) > 0:
-                for n in num:
-                    num_arr.append(n)
-                continue_flag = 1
-            if continue_flag == 1:
-                for letter in item:
-                    if letter.isdigit() == False:
-                        ch_arr.append(letter)
-                continue
-            ch_arr.append(item)
-
-    fn = filename.split('.')
-
-    filename = fn[0] + version + ".txt"
-
-    with open(filename, "w", encoding='utf-8') as fp:
-        fp.write("한글:\n")
-        fp.write(result_hangul + "\n\n")
-        fp.write("숫자:\n")
-        for item in num_arr:
-            fp.write(item + "\n")
-        fp.write("\n\n수식:\n")
-        for item in equ_arr:
-            fp.write(item + "\n")
-        fp.write("\n\n기호:\n")
-        for item in ch_arr:
-            fp.write(item + "\n")
+    image_crop(img,img_thresh,img_full)
 
 path = "./"
 file_list = os.listdir(path)
