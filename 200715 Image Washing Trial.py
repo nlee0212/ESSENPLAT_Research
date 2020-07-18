@@ -13,14 +13,14 @@ def image_crop(ori_img,img,img_full):
     small = cv2.pyrDown(ori_img)
     clear_small = cv2.pyrDown(img)
     grad = cv2.morphologyEx(small, cv2.MORPH_GRADIENT, kernel)
-    cv2.imshow('mg', grad)
+    #cv2.imshow('mg', grad)
     cv2.imwrite('mg' + img_name + '.' + img_full[1], grad)
     _, bw = cv2.threshold(grad, 0.0, 255.0, cv2.THRESH_BINARY | cv2.THRESH_OTSU)
-    cv2.imshow('t', bw)
+    #cv2.imshow('t', bw)
     cv2.imwrite('t' + img_name + '.' + img_full[1], bw)
     kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (9, 1))
     connected = cv2.morphologyEx(bw, cv2.MORPH_CLOSE, kernel)
-    cv2.imshow('mc', connected)
+    #cv2.imshow('mc', connected)
     cv2.imwrite('mc' + img_name + '.' + img_full[1], connected)
     # using RETR_EXTERNAL instead of RETR_CCOMP
     contours, hierarchy = cv2.findContours(connected.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
@@ -41,10 +41,10 @@ def image_crop(ori_img,img,img_full):
             crop_filename = 'crop' + str(idx) + img_name + '.' + img_full[1]
             cv2.imwrite(crop_filename, cropped)
             crop_filename_list.append(crop_filename)
-
+    crop_filename_list.reverse()
     # show image with contours rect
-    cv2.imshow('rects', clear_small)
-    cv2.waitKey()
+    #cv2.imshow('rects', clear_small)
+    #cv2.waitKey()
 
     text_extract(crop_filename_list, img_full)
 
@@ -97,6 +97,7 @@ def text_extract(file_list, filename_list):
     ch_arr = list()
     equ_arr = list()
     for path in file_list:
+        print(path)
         with io.open(path, 'rb') as image_file:
             content = image_file.read()
         image = vision.types.Image(content=content)
@@ -106,7 +107,7 @@ def text_extract(file_list, filename_list):
         try:
             print(texts[0].description)
         except IndexError:
-            return
+            continue
         hangul, num, equ, ch = sep_lang(texts[0].description, path, '_vision_')
         result_hangul += str(hangul)
         num_arr+=num
