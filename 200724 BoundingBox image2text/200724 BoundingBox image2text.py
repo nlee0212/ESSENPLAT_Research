@@ -33,14 +33,7 @@ def image_crop(ori_img,img,img_full,data,h):
     text_extract(crop_filename_list, img_full)
 
 def image_wash(filename):
-    """
-    1. Image Blurring by Bilateral Filtering
-    경계선은 유지하며 전체적으로 밀도가 동일한 노이즈, 화이트 노이즈를 제거해
-    경계선이 흐려지지 않고 이미지를 부드럽게 변환
-    2. Image Dilation
-    :param filename:
-    :return:
-    """
+
     img_full = filename.split('.')
     img_name = img_full[0]
 
@@ -54,15 +47,15 @@ def image_wash(filename):
     cv2.waitKey()
     cv2.destroyAllWindows()"""
     clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(2, 2))
-    img_cl = clahe.apply(img_denoise)
+    img_cl = clahe.apply(img_thresh)
     """cv2.imshow('CLAHE', img_cl)
     cv2.waitKey()
     cv2.destroyAllWindows()"""
 
-    kernel = np.array([[0, 0, 0],
-                       [0, 10, 0],
-                       [0, 0, 0]])
-    img_sharp = cv2.filter2D(img_denoise,-1,kernel)
+    kernel = np.array([[0, -1, 0],
+                       [-1, 10, -1],
+                       [0, -1, 0]])
+    img_sharp = cv2.filter2D(img_cl,-1,kernel)
     #cv2.imshow('sharp', img_sharp)
     cv2.imwrite('final'+filename,img_sharp)
     """cv2.waitKey()
