@@ -81,6 +81,10 @@ def test_text(filename):
         modified_text += ' ' + texts[0].description
     except IndexError:
         pass
+    filename += ".txt"
+    with open(filename, "w", encoding='utf-8') as fp:
+        fp.write("전처리 & without crop:\n")
+        fp.write(modified_text)
 
 
 def text_extract(file_list, filename_list):
