@@ -60,7 +60,7 @@ def image_wash(filename):
     cv2.destroyAllWindows()"""
 
     kernel = np.array([[0, 0, 0],
-                       [0, 5, 0],
+                       [0, 10, 0],
                        [0, 0, 0]])
     img_sharp = cv2.filter2D(img_denoise,-1,kernel)
     #cv2.imshow('sharp', img_sharp)
