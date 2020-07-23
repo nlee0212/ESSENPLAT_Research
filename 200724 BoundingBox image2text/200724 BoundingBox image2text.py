@@ -46,8 +46,7 @@ def image_wash(filename):
     """cv2.imshow('Denoise', img_denoise)
     cv2.waitKey()
     cv2.destroyAllWindows()"""
-    clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(2, 2))
-    img_cl = clahe.apply(img)
+
     """cv2.imshow('CLAHE', img_cl)
     cv2.waitKey()
     cv2.destroyAllWindows()"""
@@ -55,9 +54,13 @@ def image_wash(filename):
     kernel = np.array([[0, -1, 0],
                        [-1, 5, -1],
                        [0, -1, 0]])
-    img_sharp = cv2.filter2D(img_cl,-1,kernel)
+    img_sharp = cv2.filter2D(img,-1,kernel)
+
+    clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(2, 2))
+    img_cl = clahe.apply(img_sharp)
+
     #cv2.imshow('sharp', img_sharp)
-    cv2.imwrite('final'+filename,img_sharp)
+    cv2.imwrite('final'+filename,img_cl)
     test_text('final'+filename)
     """cv2.waitKey()
     cv2.destroyAllWindows()"""
