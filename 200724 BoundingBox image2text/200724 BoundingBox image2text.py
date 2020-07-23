@@ -46,21 +46,22 @@ def image_wash(filename):
 
     img = cv2.imread(filename,0)
 
-    ret, img_thresh = cv2.threshold(img,20,255,cv2.THRESH_BINARY+cv2.THRESH_OTSU)
-    """cv2.imshow('thresh', img_thresh)
-    cv2.waitKey()"""
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(4, 4))
-    img_cl = clahe.apply(img_thresh)
-    """cv2.imshow('CLAHE', img_cl)
-    cv2.waitKey()
-    cv2.destroyAllWindows()"""
-    img_denoise = cv2.fastNlMeansDenoising(img_cl,h=30)
+    img_thresh = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,5,2)
+    #cv2.imshow('thresh', img_thresh)
+    #cv2.waitKey()
+    img_denoise = cv2.fastNlMeansDenoising(img_thresh, h=20)
     """cv2.imshow('Denoise', img_denoise)
     cv2.waitKey()
     cv2.destroyAllWindows()"""
-    kernel = np.array([[0, -1, 0],
-                       [-1, 5, -1],
-                       [0, -1, 0]])
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(2, 2))
+    img_cl = clahe.apply(img_denoise)
+    """cv2.imshow('CLAHE', img_cl)
+    cv2.waitKey()
+    cv2.destroyAllWindows()"""
+
+    kernel = np.array([[0, 0, 0],
+                       [0, 5, 0],
+                       [0, 0, 0]])
     img_sharp = cv2.filter2D(img_denoise,-1,kernel)
     #cv2.imshow('sharp', img_sharp)
     cv2.imwrite('final'+filename,img_sharp)
