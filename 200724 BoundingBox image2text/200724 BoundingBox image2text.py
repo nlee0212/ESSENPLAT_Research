@@ -39,29 +39,49 @@ def image_wash(filename):
 
     img = cv2.imread(filename,0)
 
-    img_thresh = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,5,2)
+    #img_thresh = cv2.adaptiveThreshold(img,255,cv2.ADAPTIVE_THRESH_GAUSSIAN_C,cv2.THRESH_BINARY,5,2)
     #cv2.imshow('thresh', img_thresh)
     #cv2.waitKey()
-    img_denoise = cv2.fastNlMeansDenoising(img_thresh, h=20)
+    #img_denoise = cv2.fastNlMeansDenoising(img, h=5)
     """cv2.imshow('Denoise', img_denoise)
     cv2.waitKey()
     cv2.destroyAllWindows()"""
-    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(2, 2))
-    img_cl = clahe.apply(img_thresh)
+    clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(4, 4))
+    img_cl = clahe.apply(img)
     """cv2.imshow('CLAHE', img_cl)
     cv2.waitKey()
     cv2.destroyAllWindows()"""
 
     kernel = np.array([[0, -1, 0],
-                       [-1, 10, -1],
+                       [-1, 5, -1],
                        [0, -1, 0]])
     img_sharp = cv2.filter2D(img_cl,-1,kernel)
     #cv2.imshow('sharp', img_sharp)
     cv2.imwrite('final'+filename,img_sharp)
+    test_text('final'+filename)
     """cv2.waitKey()
     cv2.destroyAllWindows()"""
 
     return img, img_sharp, img_full
+
+def test_text(filename):
+    os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "C:/Program Files/VisionAPI/rosy-clover-282218-a95092db74bf.json"
+    client = vision.ImageAnnotatorClient()
+    modified_text = str()
+
+    print(filename)
+    with io.open(filename, 'rb') as image_file:
+        content = image_file.read()
+    image = vision.types.Image(content=content)
+    response = client.text_detection(image=image)
+    texts = response.text_annotations
+    print('Modified Texts:')
+    try:
+        print(texts[0].description)
+        modified_text += ' ' + texts[0].description
+    except IndexError:
+        pass
+
 
 def text_extract(file_list, filename_list):
     os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "C:/Program Files/VisionAPI/rosy-clover-282218-a95092db74bf.json"
