@@ -46,7 +46,7 @@ def image_wash(filename):
     """cv2.imshow('Denoise', img_denoise)
     cv2.waitKey()
     cv2.destroyAllWindows()"""
-    clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(4, 4))
+    clahe = cv2.createCLAHE(clipLimit=1.0, tileGridSize=(2, 2))
     img_cl = clahe.apply(img)
     """cv2.imshow('CLAHE', img_cl)
     cv2.waitKey()
